@@ -60,7 +60,8 @@ public class TimedClassTransformer implements ClassFileTransformer {
 						logger.debug("Instrumenting method " + method.getLongName());
 						method.addLocalVariable("__metricStartTime", CtClass.longType);
 						method.insertBefore("__metricStartTime = System.currentTimeMillis();");
-						method.insertAfter("com.chimpler.example.agentmetric.MetricReporter.measureTime(\"" + method.getLongName() + "\", System.currentTimeMillis() - __metricStartTime);");
+						String metricName = ctClass.getName() + "." + method.getName();
+						method.insertAfter("com.chimpler.example.agentmetric.MetricReporter.reportTime(\"" + metricName + "\", System.currentTimeMillis() - __metricStartTime);");
 						isClassModified = true;
 					} catch (Exception e) {
 						logger.warn("Skipping instrumentation of method {}: {}", method.getName(), e.getMessage());

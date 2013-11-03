@@ -1,0 +1,5 @@
+.settings
+agent/target
+agent/.settings
+agent-test/target
+agent-test/.settings

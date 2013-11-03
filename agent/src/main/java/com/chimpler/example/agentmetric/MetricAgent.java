@@ -35,6 +35,10 @@ public class MetricAgent {
     		String graphiteHost = properties.get("graphite.host");
         	if (graphiteHost != null) {
         		int graphitePort = 2003;
+        		String graphitePrefix = properties.get("graphite.prefix");
+        		if (graphitePrefix == null) {
+        			graphitePrefix = "test";
+        		}
         		String graphitePortString = properties.get("graphite.port");
         		if (graphitePortString != null) {
 	        		try {
@@ -43,7 +47,7 @@ public class MetricAgent {
 	        			logger.info("Invalid graphite port {}: {}", e.getMessage());
 	        		}
         		}
-        		MetricReporter.startGraphiteReporter(graphiteHost, graphitePort);
+        		MetricReporter.startGraphiteReporter(graphiteHost, graphitePort, graphitePrefix);
         	}
         }
     	
