@@ -8,7 +8,6 @@ import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
-import javassist.LoaderClassPath;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,6 @@ public class TimedClassTransformer implements ClassFileTransformer {
 			classPool.appendPathList(System.getProperty("java.class.path"));
 			
 			// make sure that MetricReporter is loaded
-			classPool.get("com.chimpler.example.agentmetric.MetricReporter").getClass();
-			classPool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -47,12 +44,11 @@ public class TimedClassTransformer implements ClassFileTransformer {
 			if (ctClass.isPrimitive() || ctClass.isArray() || ctClass.isAnnotation()
 					|| ctClass.isEnum() || ctClass.isInterface()) {
 				logger.debug("Skip class {}: not a class", className);
-			}
-			boolean isClassModified = false;
-			for(CtMethod method: ctClass.getDeclaredMethods()) {
-				// if method is annotated, add the code to measure the time
-				if (method.hasAnnotation(Measured.class)) {
-					try {
+			} else {
+				boolean isClassModified = false;
+				for(CtMethod method: ctClass.getDeclaredMethods()) {
+					// if method is annotated, add the code to measure the time
+					if (method.hasAnnotation(Measured.class)) {
 						if (method.getMethodInfo().getCodeAttribute() == null) {
 							logger.debug("Skip method " + method.getLongName());
 							continue;
@@ -63,13 +59,11 @@ public class TimedClassTransformer implements ClassFileTransformer {
 						String metricName = ctClass.getName() + "." + method.getName();
 						method.insertAfter("com.chimpler.example.agentmetric.MetricReporter.reportTime(\"" + metricName + "\", System.currentTimeMillis() - __metricStartTime);");
 						isClassModified = true;
-					} catch (Exception e) {
-						logger.warn("Skipping instrumentation of method {}: {}", method.getName(), e.getMessage());
 					}
 				}
-			}
-			if (isClassModified) {
-				return ctClass.toBytecode();
+				if (isClassModified) {
+					return ctClass.toBytecode();
+				}
 			}
 		} catch (Exception e) {
 			logger.debug("Skip class {}: ", className, e.getMessage());
