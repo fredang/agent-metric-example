@@ -44,30 +44,32 @@ public class TimedClassTransformer implements ClassFileTransformer {
 			if (ctClass.isPrimitive() || ctClass.isArray() || ctClass.isAnnotation()
 					|| ctClass.isEnum() || ctClass.isInterface()) {
 				logger.debug("Skip class {}: not a class", className);
-			} else {
-				boolean isClassModified = false;
-				for(CtMethod method: ctClass.getDeclaredMethods()) {
-					// if method is annotated, add the code to measure the time
-					if (method.hasAnnotation(Measured.class)) {
-						if (method.getMethodInfo().getCodeAttribute() == null) {
-							logger.debug("Skip method " + method.getLongName());
-							continue;
-						}
-						logger.debug("Instrumenting method " + method.getLongName());
-						method.addLocalVariable("__metricStartTime", CtClass.longType);
-						method.insertBefore("__metricStartTime = System.currentTimeMillis();");
-						String metricName = ctClass.getName() + "." + method.getName();
-						method.insertAfter("com.chimpler.example.agentmetric.MetricReporter.reportTime(\"" + metricName + "\", System.currentTimeMillis() - __metricStartTime);");
-						isClassModified = true;
+				return null;
+			}
+			
+			boolean isClassModified = false;
+			for(CtMethod method: ctClass.getDeclaredMethods()) {
+				// if method is annotated, add the code to measure the time
+				if (method.hasAnnotation(Measured.class)) {
+					if (method.getMethodInfo().getCodeAttribute() == null) {
+						logger.debug("Skip method " + method.getLongName());
+						continue;
 					}
-				}
-				if (isClassModified) {
-					return ctClass.toBytecode();
+					logger.debug("Instrumenting method " + method.getLongName());
+					method.addLocalVariable("__metricStartTime", CtClass.longType);
+					method.insertBefore("__metricStartTime = System.currentTimeMillis();");
+					String metricName = ctClass.getName() + "." + method.getName();
+					method.insertAfter("com.chimpler.example.agentmetric.MetricReporter.reportTime(\"" + metricName + "\", System.currentTimeMillis() - __metricStartTime);");
+					isClassModified = true;
 				}
 			}
+			if (!isClassModified) {
+				return null;
+			}
+			return ctClass.toBytecode();
 		} catch (Exception e) {
 			logger.debug("Skip class {}: ", className, e.getMessage());
+			return null;
 		}
-		return classBytes;
     }
 }
