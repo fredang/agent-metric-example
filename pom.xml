@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<modules>
 		<module>agent</module>
-		<module>agent-example</module>
+		<module>agent-test</module>
 	</modules>
 	<build>
 		<plugins>
